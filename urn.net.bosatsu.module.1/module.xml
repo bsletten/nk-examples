@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="2.0">
+	<meta>
+		<identity>
+			<uri>urn:net:bosatsu:rest:module:1</uri>
+			<version>0.0.1</version>
+		</identity>
+		<info>
+			<name>Bosatsu REST Module 1</name>
+			<description>Sample REST Module</description>
+			<icon>res:/bosatsu/pub/logo.png</icon>
+		</info>
+	</meta>
+	<system>
+		<dynamic/>
+	</system>
+	<rootspace name="Bosatsu REST API Module 1 - Development Space" uri="urn:net:bosatsu:rest:module:1">
+		<fileset>
+			<regex>res:/etc/system/SimpleDynamicImportHook.xml</regex>
+		</fileset>
+		<fileset>
+			<regex>res:/resources/.*</regex>
+		</fileset>
+		<overlay>
+			<prototype>RESTOverlay</prototype>
+			<config>
+				<basepath>/module1</basepath>
+				<XXstrict/>
+				<auto404>urn.net.bosatsu.module1.handle404</auto404>
+			</config>
+			<space>
+				<mapper>
+					<config>res:/resources/mapper/restMapper.xml</config>
+					<space>
+						<import>
+							<private/>
+							<uri>urn:org:netkernel:json:core</uri>
+						</import>
+						<import>
+							<private/>
+							<uri>urn:org:netkernel:xml:core</uri>
+						</import>
+						<import>
+							<uri>urn:org:netkernel:ext:layer1</uri>
+						</import>
+						<import>
+							<uri>urn:org:netkernel:lang:groovy</uri>
+						</import>
+						<import>
+							<uri>urn:org:netkernel:client:http</uri>
+						</import>
+						<fileset>
+							<regex>res:/resources/.*</regex>
+						</fileset>
+					</space>
+				</mapper>
+			</space>
+		</overlay>
+		<import>
+			<private/>
+			<uri>urn:org:netkernel:tpt:http</uri>
+		</import>
+		<import>
+			<uri>urn:org:netkernel:client:http</uri>
+		</import>
+		<import>
+			<uri>urn:org:netkernel:lang:groovy</uri>
+		</import>
+		<import>
+			<uri>urn:org:netkernel:xml:saxon</uri>
+		</import>
+		<fileset><!--Icon-->
+			<regex>res:/bosatsu/module1/pub/(.*)</regex>
+			<rewrite>res:/resources/pub/$1</rewrite>
+		</fileset>
+	</rootspace>
+	<rootspace name="Bosatsu REST API Module 1 - Documentation Space" public="true" uri="urn:net:bosatsu:rest:module:1:doc">
+		<fileset>
+			<regex>res:/etc/system/(Books|Docs).xml</regex>
+		</fileset>
+		<fileset>
+			<regex>res:/resources/doc/.*</regex>
+		</fileset>
+	</rootspace>
+	<rootspace name="Bosatsu REST API Module 1 - Unit Test Space" public="true" uri="urn:net:bosatsu:rest:module:1:test">
+		<fileset>
+			<regex>res:/etc/system/Tests.xml</regex>
+		</fileset>
+		<fileset>
+			<regex>res:/resources/test/.*</regex>
+		</fileset>
+		<endpoint><!-- stop any configuration from module under test from polluting address space -->
+			<prototype>Limiter</prototype>
+			<grammar>res:/etc/
+				<regex type="anything"/>
+			</grammar>
+		</endpoint>
+		<import><!-- import the main space which we are testing -->
+			<uri>urn:net:bosatsu:rest:module:1</uri>
+		</import>
+		<import>
+			<uri>urn:org:netkernel:ext:layer1</uri>
+			<private/>
+		</import>
+	</rootspace>
+</module>

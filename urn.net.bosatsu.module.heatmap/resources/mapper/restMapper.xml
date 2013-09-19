@@ -1,0 +1,61 @@
+<config>
+
+	<!-- /api bootstrap endpoint.  Returns base set of available relations/root content partitions -->
+    <endpoint>
+        <meta>
+            <rest>
+                <method>GET</method>
+                <simple>/all</simple>
+                <produces>text/plain</produces>
+                <eTag/>
+                <observed/>
+            </rest>
+        </meta>
+        <verbs>SOURCE</verbs>
+        <grammar>
+            <active>
+                <identifier>active:api-module-heatmap</identifier>
+            </active>
+        </grammar>
+        <request>
+            <identifier>active:groovy</identifier>
+            <argument name="operator">res:/resources/endpoints/heatmap.gy</argument>
+        </request>
+    </endpoint>
+    
+	<!-- Generate a simple JSON error message -->
+	<endpoint>
+		<id>urn.net.bosatsu.heatmap.error.json.simple</id>
+		<verbs>SOURCE</verbs>
+		<grammar>
+			<active>
+				<identifier>active:error-msg-simple</identifier>
+				<argument name="message"/>
+				<argument name="resource"/>
+			</active>
+		</grammar>
+		<request>
+			<identifier>active:groovy</identifier>
+			<argument name="operator">res:/resources/endpoints/error-msg-simple.gy</argument>
+			<argument name="message">arg:message</argument>
+			<argument name="resource">arg:resource</argument>
+		</request>
+	</endpoint>
+
+	<!-- Handler for 404 when no patterns match, named in module.xml -->
+	<endpoint>
+		<id>urn.net.bosatsu.heatmap.handle404</id>
+		<verbs>SOURCE</verbs>
+		<grammar>
+			<active>
+				<identifier>active:urn.net.bosatsu.heatmap.handle404</identifier>
+				<argument name="request"/>
+			</active>
+		</grammar>
+		<request>
+			<identifier>active:groovy</identifier>
+			<argument name="operator">res:/resources/endpoints/handle404.gy</argument>
+			<argument name="request">arg:request</argument>
+		</request>
+	</endpoint>
+</config>

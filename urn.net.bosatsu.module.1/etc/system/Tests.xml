@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tests>
+	<test>
+		<id>test:urn:net:bosatsu:rest:workshop</id>
+		<name>Bosatsu REST Workshop</name>
+		<desc>Bosatsu REST Workshop</desc>
+		<uri>res:/resources/test/testlist.xml</uri>
+	</test>
+</tests>

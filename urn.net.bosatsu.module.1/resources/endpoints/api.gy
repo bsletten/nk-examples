@@ -1,0 +1,94 @@
+import org.netkernel.layer0.nkf.INKFRequestContext
+import groovy.xml.MarkupBuilder
+import groovy.json.JsonBuilder
+
+//---------------------------------------------
+// Generates the XML output of the API resource
+//---------------------------------------------
+
+def apiConfigToXML(config) {
+    def version = config.@version
+    def sw = new StringWriter()
+    def xml = new MarkupBuilder(sw)
+    xml.setDoubleQuotes(true)
+    
+    xml.collection( version: config.@version, href : config.@href ) {
+        links {
+            config.endpoint.each { e ->
+                link(rel : e.type, href : e.path)            
+            }
+        }
+    }
+
+    sw.toString()
+}
+
+//---------------------------------------------
+// Generates the XML output of the API resource
+//---------------------------------------------
+
+def generateJsonLinks(config) {
+    def results = []
+    
+    config.endpoint.each { e ->
+        results.add([ rel: e.type.toString(), href : e.path.toString() ])
+    }
+    
+    results
+}
+
+def apiConfigToJSON(config) {
+    def data = [
+        collection : [
+            version : config.@version.toString(),
+            href : config.@href.toString(),
+            links : generateJsonLinks(config)
+        ]
+    ]
+    
+    def json = new JsonBuilder(data)
+    json.toPrettyString()
+}
+
+//---------------------------------------------
+// Entry point of the resource-handling script
+//---------------------------------------------
+
+// This makes my IDE happier
+INKFRequestContext ctx = context
+
+def acceptHeader = ctx.source ("httpRequest:/header/Accept")
+
+def respCode = 200
+def resp
+def mimeType = acceptHeader
+
+config = new XmlSlurper().parseText(ctx.source("res:/resources/etc/config/api-config.xml", String.class))
+
+switch(acceptHeader) {
+    case "application/vnd.collections+xml" : 
+        resp = apiConfigToXML(config)
+    break;
+    
+    case "application/vnd.collections+json":
+        resp = apiConfigToJSON(config)
+    break;
+    
+    default:
+        if(acceptHeader.contains("*/*")) {
+            mimeType = "application/vnd.collections+json"
+            resp = apiConfigToJSON(config)
+        } else {
+            resp = "Resource does not support MIME type: ${acceptHeader}"
+            respCode = 406
+            mimeType = "text/plain"
+        }
+    break;
+}
+
+resp = context.createResponseFrom(resp)
+resp.setMimeType(mimeType)
+ctx.sink ("httpResponse:/code", respCode)
+
+
+

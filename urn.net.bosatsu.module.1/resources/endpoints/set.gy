@@ -1,0 +1,318 @@
+import groovy.xml.MarkupBuilder
+import groovy.json.JsonBuilder
+import groovy.util.XmlSlurper
+import groovy.json.JsonSlurper
+
+def generateArgMap(matrixArgs) {
+    def margs = matrixArgs.split (";")
+    def args = [:]
+
+    margs.each { m ->
+        kv = m.split("=")
+        if (kv.length == 2) {
+            args [kv[0]] = kv [1]
+        }
+    }
+
+    args
+}
+
+def generatePagination(baseURL, resultSetSize, ipp, page) {
+    def results = []
+    
+  try {  def totalPages = resultSetSize / ipp
+    def remainingPages = resultSetSize % ipp
+    
+    def nextPage = -1
+    def prevPage = -1
+    
+    if(page != 1) {
+        prevPage = page - 1
+    }
+    
+    if(page < totalPages) {
+        nextPage = page + 1
+    }
+    
+    def pageArg = "page=${page}"
+    def url
+    
+    if(prevPage > 0) {
+        if(baseURL.indexOf(pageArg) < 0) {
+            url = "${baseURL};page=${prevPage}"
+        } else {
+            url = baseURL.replaceAll(pageArg, "page=${prevPage}")
+        }
+        
+        results.add( [ rel : "prev", href : "${url}" ])
+    }
+    
+    if(nextPage > 0) {
+        if(baseURL.indexOf(pageArg) < 0) {
+            url = "${baseURL};page=${nextPage}"
+        } else {
+            url = baseURL.replaceAll(pageArg, "page=${nextPage}")
+        }
+    
+        results.add( [ rel: "next", href: "${url}" ] )    
+    }
+    
+    } catch(t) {
+        t.printStackTrace()
+    }
+
+    results
+}
+
+def getResultSetSize() {
+    def r = new Random()
+    r.nextInt(100)
+}
+
+def genAccount() {
+    def id = (long) (Math.random() * 100000 ) 
+    [ username : "bob", 
+      id : "${id}" ]
+}
+
+def genOrder() {
+    def id = (long) (Math.random() * 10000 )
+    [ id : "${id}" ]
+}
+
+def genProduct() {
+    def cost = Math.random() * 100 + 1.0
+    def id = (long) (Math.random() * 1000000 ) 
+    [ id : "${id}",
+      cost :  cost.round(2) 
+      ]
+}
+
+def generateResults(kind) {
+    def results = []
+    def r = new Random()
+    def cnt = r.nextInt(50)
+    
+    cnt.times { i ->
+        switch(kind) {
+            case "account" :
+                results.add(genAccount())
+            break;
+            case "order" :
+                results.add(genOrder())
+            break;
+            case "product" :
+                results.add(genProduct())
+            break;
+        }
+    }
+    
+    results
+}
+
+def generateItemData(d) {
+    def results = []
+    
+    d.each { k,v ->
+        results.add([ name : k, value : v ])
+    }
+    
+    results
+}
+
+def generateItemLinks(d, kind) {
+    def results = []
+    
+    switch(kind) {
+        case "account" :
+            def userOrder = "/order/account/id/${d['id']}"
+            results.add([ name: "open", value : "${userOrder};status=open"])
+            results.add([ name: "recent", value : "${userOrder};status=recent"])
+        break;
+        
+        case "order" :
+        break;
+        
+        case "product" :
+        break;
+    }
+    
+    results
+}
+
+def generateItems(baseURL, kind, data, ipp, page) {
+
+    def results = []
+    
+    if(data.size() > 0)  {
+        def start = (page - 1) * ipp
+        def end = start + ipp -1
+        
+        if( end >= data.size() ) {
+            end = data.size() - 1
+        }
+    
+        results.add( [
+            href : baseURL,
+            data : [
+                [name : "type", value : kind],
+                [name : "total", value : data.size()],
+                [name : "page", value: page],
+                [name : "ipp", value: ipp]
+            ]
+        ])
+    
+        (start..end).each { i ->
+            def d = data[i]
+        
+            results.add( [
+                href : "/${kind}/id/${d['id']}",
+                data : generateItemData(d),
+                links : generateItemLinks(d, kind)
+            ])
+        }
+    }
+    
+    results
+}
+
+def getSearchParametersForKind(kind) {
+    config = new XmlSlurper().parseText(context.source("res:/resources/etc/config/api-config.xml", String.class))
+    
+    def endpoint = config.endpoint.find { it.type == kind }
+    
+    def params = [];
+    
+    endpoint.search.param.each { p ->
+        params.add( "${p.name}" )
+    }
+
+    params
+}
+
+def generateQueries(kind, margs) {
+    def params = getSearchParametersForKind(kind)
+    def currentParamValues = []
+
+    params.each { p ->
+        def paramValue = []
+        if(margs[p] != null) {
+            paramValue.add(margs[p])
+        }
+        currentParamValues.add([ name : p, value : paramValue ])
+    }
+
+    [[ encoding : "uri-template",
+        rel : "search",
+        href : "/$kind{;${params.join(",")}}",
+        prompt : "Search",
+        data : currentParamValues,
+    ]]
+}
+
+def generateData(kind, args) {
+    def baseURL = "/${kind}${args}"
+    def margs = generateArgMap(args)
+    def ipp = margs['ipp'] ? margs['ipp'].toInteger() : 10
+    def page = margs['page'] ? margs['page'].toInteger() : 1
+    
+    def results = generateResults(kind)
+    
+    def maxPage = (int)((results.size() - 1) / ipp) + 1
+    
+    if(page > maxPage) {
+        page = maxPage
+    }
+    
+    def data = [
+        collection : [
+            version : "1.0",
+            href : baseURL,
+            links : generatePagination(baseURL, results.size(), ipp, page),
+            items : generateItems(baseURL, kind, results, ipp, page),
+            queries : generateQueries(kind, margs)
+        ]
+    ]
+    
+    data
+}
+
+def generateJSONResponse(data) {
+    def json = new JsonBuilder(data)
+    json.toPrettyString()
+}
+
+def generateXMLResponse(input) {
+    def json = generateJSONResponse(input)
+    def slurper = new JsonSlurper()
+    def result = slurper.parseText(json)
+
+    def sw = new StringWriter()
+    def mb = new MarkupBuilder(sw)
+    mb.setDoubleQuotes(true)
+    
+    mb.collection( version : result.collection.version, href : result.collection.href ) {
+        
+       links {
+            result.collection.links.each { l ->
+                link(rel: l['rel'], href : l['href'])
+            }
+        }
+        
+        items {
+            def idx = 0
+            
+            result.collection.items.each { i ->
+                item( idx : "${idx}", href : i['href']) {
+                    data() {
+                    
+                    }
+                }
+            }
+            
+            idx++
+        }
+        
+        queries {
+        
+        }
+    }
+    
+    sw.toString()
+}
+
+def respCode = 200
+def output
+def mimeType = "application/vnd.collections+json"
+
+try {
+    def matrixArgs = context.getThisRequest().getArgumentValue("matrix")
+    def kindArg = context.getThisRequest().getArgumentValue("kind")
+
+    def acceptHeader = context.source ("httpRequest:/header/Accept")
+    
+    switch(acceptHeader) {
+        case "application/vnd.collections+xml" :
+            mimeType = acceptHeader
+            output = generateXMLResponse(generateData(kindArg, matrixArgs))
+        break;
+        case "application/vnd.collections+json" :
+        case "*/*":
+            output = generateJSONResponse(generateData(kindArg, matrixArgs))
+        break;
+        
+        default:
+            // TODO: Handle compound accept headers
+            output = "Resource does not support MIME type: ${acceptHeader}"
+            respCode = 406
+            mimeType = "text/plain"
+        break;
+    }
+
+} catch(t) {
+    t.printStackTrace()
+}
+
+resp = context.createResponseFrom(output)
+resp.setMimeType(mimeType)
+context.sink("httpResponse:/code", respCode)

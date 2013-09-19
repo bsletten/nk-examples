@@ -1,0 +1,7 @@
+import org.netkernel.layer0.nkf.INKFRequestContext
+import org.netkernel.layer0.nkf.INKFResponse
+
+// This makes my IDE happier
+INKFRequestContext ctx = context
+INKFResponse resp = ctx.createResponseFrom (ctx.source ("active:error-msg-simple+message@Resource not found+resource@Unknown"))   // FixMe: Get URI from "request" arg
+resp.setMimeType ("application/json")

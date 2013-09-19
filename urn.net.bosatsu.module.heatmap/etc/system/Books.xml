@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<books>
+	<book>
+		<id>book:urn:net:bosatsu:rest:workshop</id>
+		<title>Bosatsu REST Workshop Doc</title>
+		<desc>Bosatsu REST Workshop</desc>
+		<toc>
+			<item id="urn:net:bosatsu:rest:workshop:guide"/>
+			<item id="urn:net:bosatsu:rest:workshop:example"/>
+		</toc>
+	</book>
+</books>

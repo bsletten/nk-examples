@@ -1,0 +1,64 @@
+allprojects {
+    apply plugin: 'groovy'
+    apply plugin: 'netkernel'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "http://repository.codehaus.org"
+        }
+    }
+    
+    dependencies {
+        groovy localGroovy()
+        compile 'junit:junit:4.11'
+        testCompile 'info.cukes:cucumber-java:1.1.4'
+        testCompile 'info.cukes:cucumber-groovy:1.1.4'
+        testCompile 'info.cukes:cucumber-junit:1.1.4'
+        testCompile 'info.cukes:gherkin:2.12.1'
+
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.codehaus.groovy.modules.http-builder:http-builder:0.6'
+        runtime 'org.codehaus.groovy.modules.http-builder:http-builder:0.6'
+    }
+
+    configurations {
+        cucumberRuntime {
+            extendsFrom testRuntime
+        }
+    }
+}
+
+task cucumber() {
+    dependsOn assemble, test
+
+    sourceSets.test {
+        compileClasspath += project.files("urn.org.iop.nk")
+    }
+
+    doLast {
+        javaexec {
+            main = "cucumber.api.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output + project.files("urn.org.iop.nk")
+            args = ['-f', 'pretty', '--glue', 'src/test/groovy/org/iop/nk', 'src/test/resources']
+            systemProperties = sysProps
+        }
+    }
+}
+
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "http://repository.codehaus.org"
+        }
+    }
+    
+    dependencies {
+        classpath group: 'net.bosatsu.gradle', name: 'nk-gradle-plugin', version: '0.0.21'
+
+    }
+}
+

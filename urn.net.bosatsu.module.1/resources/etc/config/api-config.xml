@@ -1,0 +1,67 @@
+<api version="1.0" href="/api">
+    <endpoint>
+        <type>account</type>
+        <path>/account</path>
+        <description>Customer Accounts</description>
+        <search>
+            <param>
+                <name>status</name>
+                <prompt>Status</prompt>
+            </param>
+            <param>
+                <name>page</name>
+                <prompt>Page</prompt>
+            </param>
+            <param>
+                <name>ipp</name>
+                <prompt>Items Per Page</prompt>
+            </param>
+        </search>
+    </endpoint>
+    <endpoint>
+        <type>order</type>
+        <path>/order</path>
+        <description>Customer Orders</description>
+        <search>
+            <param>
+                <name>start</name>
+                <prompt>Start Date</prompt>
+            </param>
+            <param>
+                <name>end</name>
+                <prompt>End Date</prompt>
+            </param>
+            <param>
+                <name>status</name>
+                <prompt>Status</prompt>
+            </param>
+            <param>
+                <name>page</name>
+                <prompt>Page</prompt>
+            </param>
+            <param>
+                <name>ipp</name>
+                <prompt>Items Per Page</prompt>
+            </param>
+        </search>        
+    </endpoint>
+    <endpoint>
+        <type>product</type>
+        <path>/product</path>
+        <description>Products for Sale</description>
+        <search>
+            <param>
+                <name>status</name>
+                <prompt>Status</prompt>
+            </param>
+            <param>
+                <name>page</name>
+                <prompt>Page</prompt>
+            </param>
+            <param>
+                <name>ipp</name>
+                <prompt>Items Per Page</prompt>
+            </param>
+        </search>
+    </endpoint>
+</api>

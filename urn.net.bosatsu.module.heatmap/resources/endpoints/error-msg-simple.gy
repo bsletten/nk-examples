@@ -1,0 +1,19 @@
+import org.netkernel.layer0.nkf.INKFRequestContext
+
+// This makes my IDE happier
+INKFRequestContext ctx = context
+
+String message = ctx.getThisRequest().getArgumentValue ("message")
+String resource = ctx.getThisRequest().getArgumentValue ("resource")
+
+errorBody = """{ "error" :
+  {
+    "version" : "1.0",
+    "message" : "${message}",
+    "resource" : "${resource}"
+  }
+}
+"""
+
+ctx.createResponseFrom (errorBody)
+
